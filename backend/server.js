@@ -6,12 +6,14 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const OMDB_API_KEY = process.env.OMDB_API_KEY;
+const path = require('path');
 
 app.use(cors());
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Default route for the root URL
 app.get('/', (req, res) => {
-    res.send('Welcome to the Movie API! Use /api/movies?title=MovieName to search for a movie.');
+    res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // Route to fetch movie details

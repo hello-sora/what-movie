@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8c5a8 0%, #7a9d7a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #7a9d7a;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: #7a9d7a;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5f8260;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .loading {
+            text-align: center;
+            color: #7a9d7a;
+            font-weight: 600;
+            display: none;
+            margin: 20px 0;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            display: none;
+            border-left: 4px solid #c33;
+        }
+
+        .movie-result {
+            background: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .movie-poster {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .movie-poster img {
+            max-width: 150px;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .movie-title {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .movie-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 3px solid #7a9d7a;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #7a9d7a;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
+            color: #333;
+            margin-top: 5px;
+        }
+
+        .movie-plot {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            line-height: 1.6;
+            color: #555;
+            border-left: 3px solid #7a9d7a;
+        }
+
+        .plot-label {
+            font-weight: 600;
+            color: #7a9d7a;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Movie Search</h1>
+        <p class="subtitle">Find information about any movie</p>
+
+        <div class="search-box">
+            <input type="text" id="movieInput" placeholder="Enter movie title..." />
+            <button onclick="searchMovie()">Search</button>
+        </div>
+
+        <div class="loading" id="loading">Searching...</div>
+        <div class="error" id="error"></div>
+
+        <div class="movie-result" id="movieResult">
+            <div class="movie-poster">
+                <img id="poster" src="" alt="Movie Poster" />
+            </div>
+            <div class="movie-title" id="title"></div>
+            <div class="movie-details">
+                <div class="detail-item">
+                    <div class="detail-label">Year</div>
+                    <div class="detail-value" id="year"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Rating</div>
+                    <div class="detail-value" id="rating"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Genre</div>
+                    <div class="detail-value" id="genre"></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Director</div>
+                    <div class="detail-value" id="director"></div>
+                </div>
+            </div>
+            <div class="movie-plot">
+                <div class="plot-label">Plot</div>
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const movieInput = document.getElementById('movieInput');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const movieResult = document.getElementById('movieResult');
+
+        // Allow Enter key to trigger search
+        movieInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchMovie();
+            }
+        });
+
+        async function searchMovie() {
+            const title = movieInput.value.trim();
+            
+            if (!title) {
+                showError('Please enter a movie title');
+                return;
+            }
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            movieResult.style.display = 'none';
+
+            try {
+                const response = await fetch(`/api/movies?title=${encodeURIComponent(title)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch movie data');
+                }
+
+                displayMovie(data);
+                loading.style.display = 'none';
+            } catch (err) {
+                showError(err.message);
+                loading.style.display = 'none';
+            }
+        }
+
+        function displayMovie(data) {
+            document.getElementById('title').textContent = data.Title;
+            document.getElementById('year').textContent = data.Year;
+            document.getElementById('rating').textContent = data.Rated;
+            document.getElementById('genre').textContent = data.Genre;
+            document.getElementById('director').textContent = data.Director;
+            document.getElementById('plot').textContent = data.Plot;
+            
+            const poster = document.getElementById('poster');
+            if (data.Poster && data.Poster !== 'N/A') {
+                poster.src = data.Poster;
+                poster.alt = data.Title;
+            } else {
+                poster.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="150" height="225"%3E%3Crect fill="%23ddd" width="150" height="225"/%3E%3Ctext x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" fill="%23999"%3ENo Poster%3C/text%3E%3C/svg%3E';
+            }
+
+            movieResult.style.display = 'block';
+        }
+
+        function showError(message) {
+            error.textContent = message;
+            error.style.display = 'block';
+            movieResult.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
